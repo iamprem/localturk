@@ -15,7 +15,8 @@ var assert = require('assert'),
     errorhandler = require('errorhandler'),
     path = require('path'),
     program = require('commander'),
-    open = require('open')
+    open = require('open'),
+    session = require('client-sessions')
     ;
 
 program
@@ -279,18 +280,35 @@ if (!fs.existsSync(outputs_file)) {
 
 // --- begin server ---
 var app = express();
-app.use(bodyParser.urlencoded({extended: false}))
+app.use(bodyParser.urlencoded({extended: true}))
 app.set('views', __dirname);
 app.set("view options", {layout: false});
 app.use(errorhandler({
     dumpExceptions:true,
     showStack:true
 }));
+app.use(session({
+  cookieName: 'session',
+  secret: 'random_string_goes_here',
+  duration: 7 * 24 * 60 * 60 * 1000,
+  activeDuration: 7 * 24 * 60 * 60 * 1000,
+}));
+
 if (static_dir) {
   app.use(express.static(path.resolve(static_dir)));
 }
 
-app.get("/", function(req, res) {
+app.get('/login', function(req, res) {
+  res.sendFile(__dirname + '/login.html');
+})
+
+app.post('/login', function(req, res) {
+  username = req.body.username
+  res.cookie('username', username)
+  res.redirect('/task');
+});
+
+app.get("/task", function(req, res) {
   getNextTask(function(task, finished_tasks, num_tasks) {
     renderTemplate(template_file, task, function(e, data) {
       var out = "<!doctype html><html><body><form action=/submit method=post>\n";
