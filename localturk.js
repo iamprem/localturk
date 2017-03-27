@@ -317,7 +317,7 @@ app.get("/task", function(req, res) {
         out += "<input type=hidden name='" + k + "' value=\"" + htmlEntities(task[k] || '') + "\" />";
       }
       out += data;
-      out += '<hr/><input type=submit />\n';
+      out += '<hr/><p class="text-center"><input type="submit" id="submitButton" class="btn btn-primary" value="Submit"></p>'
       out += "</form></body></html>\n";
 
       res.send(out);
@@ -337,7 +337,7 @@ app.post("/submit", function(req, res) {
       res.send('FAIL: ' + JSON.stringify(e));
     } else {
       console.log('Saved ' + JSON.stringify(task));
-      res.redirect('/');
+      res.redirect('/task');
     }
   });
 });
@@ -347,11 +347,11 @@ app.post("/delete-last", function(req, res) {
     if (e) {
       res.send('FAIL: ' + JSON.stringify(e));
     } else {
-      res.redirect('/');
+      res.redirect('/task');
     }
   })
 });
 
 app.listen(port);
 console.log('Running local turk on http://localhost:' + port)
-open('http://localhost:' + port + '/');
+open('http://localhost:' + port + '/login');
