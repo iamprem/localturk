@@ -2,7 +2,7 @@
 // "Local Turk" server for running Mechanical Turk-like tasks locally.
 //
 // Usage:
-// node localturk.js template.html taskDir outputs.csv
+// node localturk.js template.html
 
 var assert = require('assert'),
     mysql = require("mysql"),
@@ -21,6 +21,7 @@ program
   .version('1.2.2')
   .usage('[options] template.html')
   .option('-p, --port <n>', 'Run on this port (default 4321)', parseInt)
+  .option('-s, --static_dir <dir>', 'Serve static content from this directory')
   .parse(process.argv);
 var args = program.args;
 if (1 != args.length) {
@@ -29,12 +30,13 @@ if (1 != args.length) {
 
 var template_file = args[0];
 
-var port = program.port || 4321;
+var port = program.port || 4321,
+    static_dir = program.static_dir || '.';
 
 function sqlConnection() {
   return mysql.createConnection({
     host: "localhost",
-    user: "bukky",
+    user: "premmuru",
     password: "",
     database: "localturk"
   });
@@ -89,7 +91,7 @@ function getNextTask(task_cb, done_cb, foruser) {
     'SELECT task_id, user, status, image_url FROM tasks WHERE user = ? AND status = \'READY\' ORDER BY task_id ASC LIMIT 1',
     foruser,
     function(err, rows) {
-      if (rows.length == 1) {
+      if (rows != undefined && rows.length == 1) {
         task = {};
         row = rows[0];
         for (var k in row) {
@@ -174,8 +176,9 @@ app.use(session({
   activeDuration: 7 * 24 * 60 * 60 * 1000,
 }));
 app.use(cookieParser())
-
-
+if (static_dir) {
+  app.use(express.static(path.resolve(static_dir)));
+}
 
 app.get('/login', function(req, res) {
   username = req.cookies['username']
